@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+
+	<title>République du Congo : décembre 2019 Évaluation aérienn des inondations</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta property="og:image" content="route.png" />
+	<link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+	<link rel="stylesheet" href="lib/cluster/MarkerCluster.css" />	
+	<link rel="stylesheet" href="lib/leaflet/Leaflet.Photo.css" />	
+	<link rel="stylesheet" href="css/map.css" />
+	<style>
+		.photosthumb{
+			position: absolute;
+			width: 70%;
+			height: auto;
+			padding: 5px;
+			margin-left: 15%;
+			margin-right: 15%;
+			background-color: white;
+			padding:3px;
+			/* top: -10px; */
+			z-index: 5000;
+			border-radius: 5px;
+			top:10px;
+		}
+
+		.keyfigures{
+			position: absolute;
+			width: 13%;
+			height: auto;
+			padding: 5px;
+			margin-left: 10px;
+			margin-top: 66px;
+			background-color: white;
+			
+			/* top: -10px; */
+			z-index: 5000;
+			border-radius: 5px;
+			top:10px;
+		}
+		/*.photos{
+			background-color: white;
+			overflow-y: auto;
+			height: 50px;
+		}*/
+
+		.photos {
+			overflow-x: scroll;
+			overflow-y: hidden;
+			white-space: nowrap;
+			
+			
+		}
+
+		.photos img{
+				display: inline-block;
+				margin:2px;
+		}
+
+		.logo{
+			height: 50px;
+		}
+
+		.titre1{
+			font-family: 'Arial';
+			font-size: 24px;
+			font-weight: bold;
+			color: #418dfe;
+		}
+
+		.titre2{
+			font-family: 'Arial';
+			font-size: 14px;
+			color: #418dfe;
+		}
+
+		.blocimage{
+			float: left;
+		}
+
+		.blocTitre{
+			float: left;
+    padding-left: 12px;
+    border-left: 1px solid #418fde;
+    /* border: 1px solid; */
+    margin-left: 7px;
+		}
+		.blocentete{
+			display: flow-root;
+		}
+	#faible, #modere,#eleve, #extreme, #all{
+		display: inline-block;
+		padding: 2px;
+		border-radius: 4px;
+		margin-left: 3px;
+		}
+	#faible:hover, #modere:hover,#eleve:hover, #extreme:hover, #all:hover, #origineAutre:hover, #origineKobo:hover{
+		background-color: #418fde;
+		color:#fff;
+		}
+		.blocfiltres{
+			font-family: 'Arial';
+			font-size: 12px;
+			margin: 3px;
+    		margin-top: 5px;
+			background-color: #ccc;
+			padding : 3px;
+			border-radius: 4px;
+			color:#353535;
+		}
+	</style>
+</head>
+<body>
+	<div class='photosthumb'>
+		<div class="blocentete">
+			<div class="blocimage">
+				<img src="img/logo.png" class="logo"/>
+			</div>
+			<div class="blocTitre">
+				<span class='titre1'>République du Congo</span>
+				<br/><span class='titre2'>Évaluation aérienne des inondations</span>
+				<br/><span class='titre2'><i>Décembre 2019</i> </span>
+				
+
+			</div>
+		</div>
+		<div class="photos"></div>
+		<div class="blocfiltres">
+			<strong>Sévérité : </strong>
+				<span class="filtres" id='faible'>faible</span>, 
+				<span class="filtres" id='modere'>modéré</span>, 
+				<span class="filtres" id='eleve'>élevé</span>, 
+				<span class="filtres" id='extreme'>extrême</span>, 
+				<span class="filtres" id='all'>tout</span></div>
+		<div class="blocfiltres"><strong>Origine : </strong><span class="filtres" id='origineKobo'>Formulaire évaluation</span>, <span class="filtres" id='origineAutre'>Photos sans classement</span></div>
+	</div>
+
+	<!--div class='keyfigures'>
+		<h5>Chffres clès<br/></h5>
+
+		<div class="row">
+			<div class="col-lg-12">
+				<img src="img/affect.png" class="logo"/><br>
+				Nonbre de personnes affectees
+			</div>
+
+			<div class="col-lg-12">
+				<span id='NbPopulation'></span>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-lg-12">
+				<img src="img/Flood.png" class="logo"/><br>
+				Nonbre de Maison affectees
+			</div>
+			<div class="col-lg-12">
+				<span id='NbMaison'></span>
+			</div>
+		</div>
+	</div-->
+
+
+	<div id="map"></div>
+	<script src="lib/jquery-3.3.1.min.js"></script>
+	<script src="lib/reqwest.min.js"></script>
+	<script src="lib/leaflet/leaflet.js"></script>
+	<script src="lib/cluster/leaflet.markercluster.js"></script>	
+	<script src="lib/leaflet/Leaflet.Photo.js"></script>	
+	<script>
+
+	var map = L.map('map', {
+		maxZoom: 17
+	});
+
+	/*L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+	}).addTo(map);*/
+
+	var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+	}).addTo(map);
+
+	var OpenMapSurfer_Hybrid = L.tileLayer('https://maps.heigit.org/openmapsurfer/tiles/hybrid/webmercator/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: 'Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a> | Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+	}).addTo(map);
+
+	var photoLayer = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<a href="{url}" target="blank_"><img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var layerfaible = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<a href="{url}" target="blank_"><img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var layerModere = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<a href="{url}" target="blank_"><img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var layerExtreme = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<a href="{url}" target="blank_"><img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var layerEleve = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<a href="{url}" target="blank_"><img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var layerOtherPhotos = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<a href="{url}" target="blank_"><img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var layerKoboPhotos = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<a href="{url}" target="blank_"><img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var photos = [];
+	var totalMaison = 0;
+	var totalPopAffecte = 0;
+
+
+
+	//GET LATEST KEY FIGURESS
+	//$.getJSON("https://spreadsheets.google.com/feeds/list/17qwONCFDFRUW_y-1HQzX6qQnGDZqi2OlzbAMf2jaxHc/od6/public/values?alt=json", function(data) {
+	$.getJSON("https://sheets.googleapis.com/v4/spreadsheets/17qwONCFDFRUW_y-1HQzX6qQnGDZqi2OlzbAMf2jaxHc/values/data?alt=json&key=AIzaSyDOrhWBRhua2tHle2kC8dp1b3FIVZTmMK8", function(data) {
+		result = data.values;
+		console.log(result)
+
+		var latestDatas = [];
+
+
+		console.log(result);
+		for (i = 1; i < result.length; i++) {
+			if (!isNaN(parseFloat(result[i]['Nombre_de_maisons_affectees']))) {
+			
+				nbMaison = parseFloat(result[i]['Nombre_de_maisons_affectees']);
+				nbAffecte = parseFloat(result[i]['calcul_nb_pop_affecte']);
+				severite = result[i]['severite'];
+				village = result[i]['village'];
+
+
+				totalMaison+=nbMaison;
+				totalPopAffecte+=nbAffecte;
+
+				latestDatas.push({
+					photo: field.gsx$photo.$t,
+					nbMaison: nbMaison,
+					nbPopAffecte: nbAffecte,
+					severite: severite,
+					village: village,
+				});
+			}
+		}
+
+
+		/*
+		$('#NbPopulation').html(totalPopAffecte);
+		$('#NbMaison').html(totalMaison);*/
+
+
+		// FROM KOBO
+		var koboforms = [
+			'https://kc.humanitarianresponse.info/api/v1/data/464745?format=jsonp',
+		];
+
+		$.each(koboforms, function(i, form){
+			reqwest({
+				url: form,
+				type: 'jsonp',
+				success: function (datas) {
+					
+					console.log(datas);
+					
+					//var photos = [];
+					var faible = [];
+					var modere = [];
+					var eleve = [];
+					var extreme = [];
+					var koboPhoto = [];
+
+					$.each(datas, function(i, data){
+						url = "";
+			
+						if (data._attachments.length>0) {
+							if (data._geolocation[0] === undefined){
+
+							}else{
+								if (!isNaN(parseFloat(data._geolocation[0]))) {
+									nbhouses = data.Nombre_de_maisons_affectees;
+									severity = data.Severite_impact;
+									village = data.Nom_du_village;
+									numberAffecte = data.Estimation_nombre_pop;
+									caption = "";
+
+
+									//RECHERHCE DES DERNIERES DONNEES
+									$.each(latestDatas, function(i, latestData){
+										if (latestData.photo == data.Photo) {
+											nbhouses=latestData.nbMaison;
+											numberAffecte=latestData.nbPopAffecte;
+											severity = latestData.severite;
+											village = latestData.village;
+											console.log(data.Photo+" updated, val="+numberAffecte+" , photo="+latestData.photo+", severite ="+severity+", village ="+village);
+										}
+									});
+
+
+
+									if(data.Severite_impact!='undefined'){
+										caption += "<strong>Sévérité</strong> : "+severity+"<br/>";
+									}
+									
+									if(data.Nombre_de_maisons_affectees!='undefined'){
+										caption += "<strong>Nombre de maisons touchées</strong> : "+nbhouses+"<br/>";
+									}
+
+									if(data.Estimation_nombre_pop!='undefined'){
+										caption += "<strong>Estimation du nombre de personnes touchées</strong> : "+numberAffecte+"<br/>";
+									}
+
+									if(data.Nom_du_village!='undefined'){
+										caption += "<strong>Village </strong> : "+village+"";
+									}
+									
+
+
+									if(data.Severite_impact!='undefined'){
+										//severity = "<strong>Sévérité</strong> : "+data.Severite_impact+"<br/>";
+
+										switch (data.Severite_impact){
+											case "faible":
+												faible.push({
+													lat: data._geolocation[0],
+													lng: data._geolocation[1],
+													url: data._attachments[0].download_url,
+													caption: caption,
+													thumbnail: data._attachments[0].download_small_url
+												});
+											break;
+											case "modere":
+												modere.push({
+													lat: data._geolocation[0],
+													lng: data._geolocation[1],
+													url: data._attachments[0].download_url,
+													caption: caption,
+													thumbnail: data._attachments[0].download_small_url
+												});
+											break;
+											case "extreme":
+												extreme.push({
+													lat: data._geolocation[0],
+													lng: data._geolocation[1],
+													url: data._attachments[0].download_url,
+													caption: caption,
+													thumbnail: data._attachments[0].download_small_url
+												});
+											break;
+											case "eleve":
+												eleve.push({
+													lat: data._geolocation[0],
+													lng: data._geolocation[1],
+													url: data._attachments[0].download_url,
+													caption: caption,
+													thumbnail: data._attachments[0].download_small_url
+												});	
+											break;
+										}
+									}
+
+						
+									photos.push({
+										lat: data._geolocation[0],
+										lng: data._geolocation[1],
+										url: data._attachments[0].download_url,
+										caption: caption,
+										thumbnail: data._attachments[0].download_small_url
+									});
+
+									koboPhoto.push({
+										lat: data._geolocation[0],
+										lng: data._geolocation[1],
+										url: data._attachments[0].download_url,
+										caption: caption,
+										thumbnail: data._attachments[0].download_small_url
+									});
+
+									$(".photos").append("<img src='"+data._attachments[0].download_small_url+"' onclick='zoomto("+data._geolocation[0]+","+data._geolocation[1]+")' alt='photo' height='42' width='42'>")
+								}
+							}
+						}	
+					});
+
+					
+					layerfaible.add(faible);
+					layerModere.add(modere);
+					layerExtreme.add(extreme);
+					layerEleve.add(eleve);
+					layerKoboPhotos.add(koboPhoto);
+
+					photoLayer.add(photos).addTo(map);
+					map.fitBounds(photoLayer.getBounds());
+
+
+					//GESTION DES EVENEMENTS
+
+					$("#faible").click(function() {
+						$(".filtres").css({"background-color": "","color":"#353535"});
+						$("#faible").css({"background-color": "#418fde","color":"#fff"});
+						map.eachLayer(function(layer){
+							if(layer != Esri_WorldImagery && layer != OpenMapSurfer_Hybrid  ){
+								map.removeLayer(layer)
+							}
+							
+						});
+						map.addLayer(layerfaible)
+						map.fitBounds(layerfaible.getBounds());
+					});
+
+					$("#modere").click(function() {
+						$(".filtres").css({"background-color": "","color":"#353535"});
+						$("#modere").css({"background-color": "#418fde","color":"#fff"});
+						map.eachLayer(function(layer){
+							if(layer != Esri_WorldImagery && layer != OpenMapSurfer_Hybrid  ){
+								map.removeLayer(layer)
+							}
+						});
+						map.addLayer(layerModere)
+						map.fitBounds(layerModere.getBounds());
+					});
+
+					$("#eleve").click(function() {
+						$(".filtres").css({"background-color": "","color":"#353535"});
+						$("#eleve").css({"background-color": "#418fde","color":"#fff"});
+						map.eachLayer(function(layer){
+							if(layer != Esri_WorldImagery && layer != OpenMapSurfer_Hybrid  ){
+								map.removeLayer(layer)
+							}
+						});
+						map.addLayer(layerEleve)
+						map.fitBounds(layerEleve.getBounds());
+					});
+
+					$("#extreme").click(function() {
+						$(".filtres").css({"background-color": "","color":"#353535"});
+						$("#extreme").css({"background-color": "#418fde","color":"#fff"});
+						map.eachLayer(function(layer){
+							if(layer != Esri_WorldImagery && layer != OpenMapSurfer_Hybrid  ){
+								map.removeLayer(layer)
+							}
+						});
+						map.addLayer(layerExtreme)
+						map.fitBounds(layerExtreme.getBounds());
+					});
+
+					$("#all").click(function() {
+						$(".filtres").css({"background-color": "","color":"#353535"});
+						$("#all").css({"background-color": "#418fde","color":"#fff"});
+						map.eachLayer(function(layer){
+							if(layer != Esri_WorldImagery && layer != OpenMapSurfer_Hybrid  ){
+								map.removeLayer(layer)
+							}
+						});
+						map.addLayer(photoLayer)
+						map.fitBounds(photoLayer.getBounds());
+					});
+
+					$("#origineKobo").click(function() {
+						$(".filtres").css({"background-color": "","color":"#353535"});
+						$("#origineKobo").css({"background-color": "#418fde","color":"#fff"});
+						map.eachLayer(function(layer){
+							if(layer != Esri_WorldImagery && layer != OpenMapSurfer_Hybrid  ){
+								map.removeLayer(layer)
+							}
+						});
+						map.addLayer(layerKoboPhotos)
+						map.fitBounds(layerKoboPhotos.getBounds());
+					});
+
+					$("#origineAutre").click(function() {
+						$(".filtres").css({"background-color": "","color":"#353535"});
+						$("#origineAutre").css({"background-color": "#418fde","color":"#fff"});
+						map.eachLayer(function(layer){
+							if(layer != Esri_WorldImagery && layer != OpenMapSurfer_Hybrid  ){
+								map.removeLayer(layer)
+							}
+						});
+						map.addLayer(layerOtherPhotos)
+						map.fitBounds(layerOtherPhotos.getBounds());
+					});
+				}
+			});
+		});
+	});
+
+
+
+	// GET PHOTOS FROM GOOGLE
+	$.getJSON("https://spreadsheets.google.com/feeds/list/1TugXPmO6ibDaHJAYhrFHo_DIa9BRyhiDvSBEP8Ox47I/od6/public/values?alt=json", function(data) {
+		result = data.feed.entry;
+		console.log(result);
+		
+		var otherPhotos = [];
+		$.each(result, function(i, field){
+			if (field.gsx$latitude.$t === undefined){
+
+			}else{
+				if (!isNaN(parseFloat(field.gsx$latitude.$t))) {
+				
+					latitude = parseFloat(field.gsx$latitude.$t);
+					longitude = parseFloat(field.gsx$longitude.$t);
+					
+					photos.push({
+						lat: latitude,
+						lng: longitude,
+						url: field.gsx$largeurl.$t,
+						caption: "",
+						thumbnail: field.gsx$smallurl.$t
+					});
+
+					otherPhotos.push({
+						lat: latitude,
+						lng: longitude,
+						url: field.gsx$largeurl.$t,
+						caption: "",
+						thumbnail: field.gsx$smallurl.$t
+					});
+
+
+					$(".photos").append("<img src='"+field.gsx$smallurl.$t+"' onclick='zoomto("+latitude+","+longitude+")' alt='photo' height='42' width='42'>")
+							
+				}
+			}
+			
+		});
+
+		layerOtherPhotos.add(otherPhotos);
+		//photoLayer.add(photos).addTo(map);
+		//layerOtherPhotos.add(otherPhotos).addTo(map);
+		//map.fitBounds(photoLayer.getBounds());
+	});
+
+
+
+
+	
+
+	
+
+	function zoomto(lat,lng){
+		map.setView([lat, lng],10);
+	}
+
+	</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Republic of Congo : 2019 Aerial Assessment</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta property="og:image" content="route.png" />
+	<link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+	<link rel="stylesheet" href="lib/cluster/MarkerCluster.css" />	
+	<link rel="stylesheet" href="lib/leaflet/Leaflet.Photo.css" />	
+	<link rel="stylesheet" href="css/map.css" />
+	<style>
+		.photosthumb{
+			position: absolute;
+			width: 80%;
+			height: auto;
+			padding: 5px;
+			margin-left: 10%;
+			margin-right: 10%;
+			background-color: white;
+			padding:3px;
+			/* top: -10px; */
+			z-index: 5000;
+			border-radius: 5px;
+			top:5px;
+		}
+		/*.photos{
+			background-color: white;
+			overflow-y: auto;
+			height: 50px;
+		}*/
+
+		.photos {
+			overflow-x: scroll;
+			overflow-y: hidden;
+			white-space: nowrap;
+			
+			
+		}
+
+		.photos img{
+				display: inline-block;
+				margin:2px;
+		}
+
+		.logo{
+			height: 50px;
+		}
+
+		.titre1{
+			font-family: 'Arial';
+			font-size: 24px;
+			font-weight: bold;
+			color: #418dfe;
+		}
+
+		.titre2{
+			font-family: 'Arial';
+			font-size: 14px;
+			color: #418dfe;
+		}
+
+		.blocimage{
+			float: left;
+		}
+
+		.blocTitre{
+			float: left;
+    padding-left: 12px;
+    border-left: 1px solid #418fde;
+    /* border: 1px solid; */
+    margin-left: 7px;
+		}
+		.blocentete{
+			display: flow-root;
+		}
+	</style>
+</head>
+<body>
+	<div class='photosthumb'>
+		<div class="blocentete">
+			<div class="blocimage">
+				<img src="img/logo.png" class="logo"/>
+			</div>
+			<div class="blocTitre">
+				<span class='titre1'>Republic of Congo</span><br/><span class='titre2'>2019 Aerial Assessment</span> 
+			</div>
+		</div>
+		<div class="photos"></div>
+	</div>
+	<div id="map"></div>
+	<script src="lib/jquery-3.3.1.min.js"></script>
+	<script src="lib/reqwest.min.js"></script>
+	<script src="lib/leaflet/leaflet.js"></script>
+	<script src="lib/cluster/leaflet.markercluster.js"></script>	
+	<script src="lib/leaflet/Leaflet.Photo.js"></script>	
+	<script>
+
+	var map = L.map('map', {
+		maxZoom: 17
+	});
+
+	L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+	}).addTo(map);
+
+	var photoLayer = L.photo.cluster({ spiderfyDistanceMultiplier: 1.2 }).on('click', function (evt) {
+		evt.layer.bindPopup(L.Util.template('<img src="{url}" /></a><p>{caption}</p>', evt.layer.photo), {
+			className: 'leaflet-popup-photo',
+			minWidth: 400
+		}).openPopup();
+	});
+
+	var koboforms = [
+		'https://kc.humanitarianresponse.info/api/v1/data/464745?format=jsonp',
+	];
+
+	$.each(koboforms, function(i, form){
+		reqwest({
+			url: form,
+			type: 'jsonp',
+			success: function (datas) {
+				var photos = [];
+				console.log(datas);
+				
+				
+				$.each(datas, function(i, data){
+					url = "";
+					console.log(data);
+					if (data._attachments.length>0) {
+						if (!isNaN(parseFloat(data._geolocation[0]))) {
+							photos.push({
+								lat: data._geolocation[0],
+								lng: data._geolocation[1],
+								url: data._attachments[0].download_url,
+								caption: "",
+								thumbnail: data._attachments[0].download_small_url
+							});
+
+							$(".photos").append("<img src='"+data._attachments[0].download_small_url+"' onclick='zoomto("+data._geolocation[0]+","+data._geolocation[1]+")' alt='photo' height='42' width='42'>")
+						}
+						
+					}	
+				});
+
+				photoLayer.add(photos).addTo(map);
+				map.fitBounds(photoLayer.getBounds());
+			}
+		});
+	});
+
+	function zoomto(lat,lng){
+		console.log("zoom to"+lat+" "+lng)
+		//map.flyTo([lat, lng], 3);
+		map.setView([lat, lng],10);
+	}
+
+	</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet Norvegiana</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta property="og:image" content="route.png" />
+	<link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+	<link rel="stylesheet" href="lib/cluster/MarkerCluster.css" />	
+	<link rel="stylesheet" href="lib/leaflet/Leaflet.Photo.css" />	
+	<link rel="stylesheet" href="css/map.css" />
+</head>
+<body>
+	<div id="map"></div>
+	<script src="lib/jquery-3.4.1.slim.min.js"></script>
+
+		
+	<script>
+
+	$.ajax({
+		url: 'http://localhost:8080/resourceserver/protected-no-scope',
+		type: 'GET',
+		contentType: 'application/json',
+		headers: {
+			'Authorization': 'Bearer <token>'
+		},
+		success: function (result) {
+			// CallBack(result);
+		},
+		error: function (error) {
+
+		}
+	});
+	</script>
+</body>
+</html>
